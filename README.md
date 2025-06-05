@@ -1,5 +1,9 @@
 # Index search node
 
+A node for Index federated search engine.
+
+Early release. Contains lots of hardcode. Be aware.
+
 ## Health
 
 Return health stat, timestamp, uptime
