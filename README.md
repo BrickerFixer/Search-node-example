@@ -54,7 +54,7 @@ export const column = "supporting";
 ## Methods of rendering
 
 - shouldRender
-Needed if island has the “self” trigger type.
+Needed for island to send itself to frontend.
 - renderIsland
 Obviously needed, so the island will show its contents
 
