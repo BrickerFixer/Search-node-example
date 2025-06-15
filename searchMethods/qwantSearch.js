@@ -83,8 +83,14 @@ module.exports = {
           }
         });
       }
+      // Misspell island
+      const misspellIsland = require('../islands/misspellIsland');
+      const misspellResult = await misspellIsland.shouldRender(query);
       // Exposé island (Wikipedia)
       const islands = [];
+      if (misspellResult && misspellResult.shouldRender) {
+        islands.push(misspellIsland.renderIsland(query, misspellResult));
+      }
       const exposeResult = await exposeIsland.shouldRender(query);
       if (exposeResult && exposeResult.shouldRender) {
         islands.push(exposeIsland.renderIsland(query, exposeResult));
