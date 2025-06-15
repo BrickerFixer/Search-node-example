@@ -10,8 +10,56 @@ const exposeIsland = require('../islands/exposeIsland');
 module.exports = {
   name: 'Qwant Search',
   description: 'Performs a search using the Qwant API.',
-  async search(query, rankingPreferences) {
-    const url = `https://api.qwant.com/v3/search/web?count=10&q=${encodeURIComponent(query)}&t=web&uiv=4&tgp=3&locale=en_US`;
+  supports: {
+    pagination: true,
+    pageParam: 'p',
+    pageSize: 10,
+    maxPage: 100,
+    filters: [
+      {
+        name: 'safesearch',
+        type: 'integer',
+        description: 'Level of content filtering (0=off, 1=moderate, 2=strict)',
+        default: 1,
+        choices: [0, 1, 2] // for client dropdown
+      },
+      {
+        name: 'locale',
+        type: 'string',
+        description: 'Locale/language code (e.g. en_US, fr_FR)',
+        default: 'en_US'
+      }
+    ]
+  },
+  async search(query, rankingPreferences = {}) {
+    // Log any custom ranking parameters received
+    Object.entries(rankingPreferences).forEach(([key, value]) => {
+      if (['safesearch', 'locale', 'p', 'count'].includes(key)) return;
+      console.log(`[QwantSearch] Custom ranking parameter received: ${key} =`, value);
+    });
+    // Accept all supported parameters from client
+    const page = parseInt(rankingPreferences.p || 1, 10);
+    const count = parseInt(rankingPreferences.count || 10, 10);
+    const offset = (page - 1) * count;
+    const safesearch = typeof rankingPreferences.safesearch !== 'undefined' ? rankingPreferences.safesearch : 1;
+    const locale = rankingPreferences.locale || 'en_US';
+    const params = {
+      count,
+      offset,
+      q: query,
+      t: rankingPreferences.t || 'web',
+      locale,
+      safesearch,
+      uiv: rankingPreferences.uiv || '4',
+      tgp: rankingPreferences.tgp || 3
+    };
+    // Log the received page parameter and calculated offset
+    console.log('[QwantSearch] Received page parameter p:', page, 'Calculated offset:', offset, 'Locale:', locale, 'Safesearch:', safesearch);
+    // Build URL with all parameters
+    const url = `https://api.qwant.com/v3/search/web?` +
+      Object.entries(params)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
     try {
       const response = await fetchFn(url, {
         headers: {
@@ -50,10 +98,11 @@ module.exports = {
           favicon: item.favicon || ''
         })),
         html: '', // No layout
-        islands
+        islands,
+        meta: { page } // Add meta with current page
       };
     } catch (e) {
-      return { answers: [], html: '', islands: [], error: e.message };
+      return { answers: [], html: '', islands: [], error: e.message, meta: { page } };
     }
   }
 };

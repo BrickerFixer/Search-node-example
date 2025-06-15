@@ -3,18 +3,23 @@ const app = express();
 const port = 4000;
 const os = require('os');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
-// Import search methods
-delete require.cache[require.resolve('./searchMethods/textSearch')];
-delete require.cache[require.resolve('./searchMethods/musicSearch')];
-const textSearch = require('./searchMethods/textSearch');
-const musicSearch = require('./searchMethods/musicSearch');
-const qwantSearch = require('./searchMethods/qwantSearch');
+// Dynamically load all search methods from the searchMethods directory
+const searchMethodsDir = path.join(__dirname, 'searchMethods');
+const searchMethods = {};
+fs.readdirSync(searchMethodsDir).forEach(file => {
+  if (file.endsWith('.js')) {
+    const methodName = path.basename(file, '.js');
+    searchMethods[methodName] = require(path.join(searchMethodsDir, file));
+  }
+});
 
 const NODE_NAME = 'Example Search Node';
 const NODE_DESCRIPTION = 'A node that provides search capabilities.';
-const NODE_FEATURES = ['text search', 'qwant search', "music search"];
-const NODE_METHODS = ['text', 'qwant', "music"];
+const NODE_FEATURES = Object.values(searchMethods).map(m => m.description || m.name || '').filter(Boolean);
+const NODE_METHODS = Object.keys(searchMethods);
 
 const startTime = Date.now();
 
@@ -37,7 +42,10 @@ app.get('/metadata', (req, res) => {
     name: NODE_NAME,
     description: NODE_DESCRIPTION,
     features: NODE_FEATURES,
-    methods: NODE_METHODS
+    methods: NODE_METHODS,
+    methodCapabilities: Object.fromEntries(
+      Object.entries(searchMethods).map(([k, v]) => [k, v.supports || {}])
+    )
   });
 });
 
@@ -45,16 +53,11 @@ app.get('/metadata', (req, res) => {
 app.post('/search', async (req, res) => {
   const { query, method = 'text', rankingPreferences = {} } = req.body;
   if (!query) return res.status(400).json({ error: 'Missing query' });
-  let results;
-  if (method === 'text') {
-    results = await textSearch.search(query, rankingPreferences);
-  } else if (method === 'qwant') {
-    results = await qwantSearch.search(query, rankingPreferences);
-  } else if (method === 'music') {
-    results = await musicSearch.search(query, rankingPreferences);
-  } else {
+  const searchMethod = searchMethods[method];
+  if (!searchMethod || typeof searchMethod.search !== 'function') {
     return res.status(400).json({ error: 'Unknown search method' });
   }
+  const results = await searchMethod.search(query, rankingPreferences);
   res.json(results);
 });
 
