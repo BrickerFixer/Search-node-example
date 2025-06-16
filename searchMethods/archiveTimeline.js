@@ -14,8 +14,8 @@ module.exports = {
     pagination: false,
     filters: [] // No user-facing filters for this method
   },
-  allowedIslands: ['expose', 'misspell'], // Only these islands will be considered
-  async search(query) {
+  allowedIslands: [], // Only these islands will be considered
+  async search(query, rankingPreferences) {
     // Check if query is a domain or URL
     let url, domain;
     try {
