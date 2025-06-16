@@ -7,8 +7,10 @@ exports.require_context = false;
 exports.manually_curated = true;
 exports.column = "supporting";
 
-exports.shouldRender = function(query) {
-  return exports.keywords.some(k => query.includes(k));
+exports.shouldRender = async function(query) {
+  return exports.keywords.some(k => query.includes(k))
+    ? { shouldRender: true }
+    : { shouldRender: false };
 };
 
 exports.renderIsland = function(query) {

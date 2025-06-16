@@ -4,6 +4,8 @@ const fs = require('fs');
 const FlexSearch = require('flexsearch');
 const { JSDOM } = require('jsdom');
 const pdfParse = require('pdf-parse');
+const { findRelevantSentence } = require('../utils/snippetHelpers');
+const { collectAllowedIslands } = require('../utils/islandHelpers');
 
 const dataDir = path.join(__dirname, '../demo/staticdocs');
 let docIndex = new FlexSearch.Document({
@@ -71,6 +73,7 @@ buildIndex();
 module.exports = {
   name: 'Static Document Search',
   description: 'Searches markdown, HTML, and PDF files using BM25-like scoring.',
+  allowedIslands: ['expose', 'misspell'], // Only these islands will be considered
   supports: {
     pagination: true,
     pageParam: 'p',
@@ -99,32 +102,22 @@ module.exports = {
     const count = parseInt(rankingPreferences.count || 10, 10);
     const paged = flat.slice((page - 1) * count, page * count);
     console.log('[StaticDocSearch] Returning page', page, 'with', paged.length, 'results.');
-    // For each result, find the first sentence containing the query
-    function findSentence(content, query) {
-      if (!content) return '';
-      const sentences = content.match(/[^.!?\n]+[.!?\n]+/g) || [content];
-      const q = query.trim().toLowerCase();
-      for (const s of sentences) {
-        if (s.toLowerCase().includes(q)) return s.trim();
-      }
-      // fallback: first sentence
-      return sentences[0].trim();
-    }
     // Build file URL for serving static files
     function getFileUrl(fileName) {
       // Assumes you have static serving set up for /demo/staticdocs
       return `/demo/staticdocs/${encodeURIComponent(fileName)}`;
     }
+    const islands = await collectAllowedIslands(query, this.allowedIslands);
     return {
       answers: paged.map(f => ({
         name: f.name,
         domain: 'static',
         url: getFileUrl(f.name),
-        snippet: findSentence(f.content, query),
+        snippet: findRelevantSentence(f.content, query),
         favicon: ''
       })),
       html: '',
-      islands: [],
+      islands,
       meta: { page, total: flat.length }
     };
   }

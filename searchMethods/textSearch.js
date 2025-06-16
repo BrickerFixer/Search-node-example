@@ -1,11 +1,16 @@
-// Example text search method
-const testIsland = require('../islands/testIsland');
-const exposeIsland = require('../islands/exposeIsland');
-const musicExposeIsland = require('../islands/musicExposeIsland');
+const { collectAllowedIslands } = require('../utils/islandHelpers');
 
+// Example text search method
 module.exports = {
   name: 'Text Search',
   description: 'Performs a simple text search.',
+  supports: {
+    pagination: false,
+    pageParam: 'p',
+    pageSize: 10,
+    filters: [] // No user-facing filters for this method
+  },
+  allowedIslands: ['expose', 'misspell', 'test', 'music-expose'], // Only these islands will be considered
   async search(query, rankingPreferences) {
     // Dummy search results
     const answers = [
@@ -38,26 +43,13 @@ module.exports = {
         favicon: 'https://example.com/favicon.ico'
       }
     ];
-    
-    // Check if any islands should be included
-    const islands = [];
-    if (testIsland.shouldRender(query)) {
-      islands.push(testIsland.renderIsland(query));
-    }
-    // Exposé island (Wikipedia)
-    const exposeResult = await exposeIsland.shouldRender(query);
-    if (exposeResult && exposeResult.shouldRender) {
-      islands.push(exposeIsland.renderIsland(query, exposeResult));
-    }
-    // Music Exposé island (music method)
-    const musicExposeResult = await musicExposeIsland.shouldRender(query);
-    if (musicExposeResult && musicExposeResult.shouldRender) {
-      islands.push(musicExposeIsland.renderIsland(query, musicExposeResult));
-    }
+    // Use the shared utility for islands
+    const islands = await collectAllowedIslands(query, this.allowedIslands);
     return {
       answers,
       html: '',
-      islands
+      islands,
+      meta: { page: 1, pageSize: 10, total: answers.length }
     };
   }
 };

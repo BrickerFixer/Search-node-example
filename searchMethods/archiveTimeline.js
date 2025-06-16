@@ -1,3 +1,5 @@
+const { collectAllowedIslands } = require('../utils/islandHelpers');
+
 let fetchFn;
 try {
   fetchFn = fetch;
@@ -8,6 +10,11 @@ try {
 module.exports = {
   name: 'Archive.org Timeline',
   description: 'Shows a timeline of snapshots for a given domain or URL using the Internet Archive.',
+  supports: {
+    pagination: false,
+    filters: [] // No user-facing filters for this method
+  },
+  allowedIslands: ['expose', 'misspell'], // Only these islands will be considered
   async search(query) {
     // Check if query is a domain or URL
     let url, domain;
@@ -86,10 +93,12 @@ module.exports = {
         <div style="margin-top:18px;font-size:0.98em;color:#b3b8c5;">Click a year to view a snapshot in the Wayback Machine.</div>
       </div>
     `;
+    const islands = await collectAllowedIslands(query, this.allowedIslands);
     return {
       answers: [],
       html,
-      islands: []
+      islands,
+      meta: { special: true }
     };
   }
 };

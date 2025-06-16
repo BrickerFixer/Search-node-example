@@ -5,11 +5,12 @@ try {
 } catch (e) {
   fetchFn = require('node-fetch');
 }
-const exposeIsland = require('../islands/exposeIsland');
+const { collectAllowedIslands } = require('../utils/islandHelpers');
 
 module.exports = {
   name: 'Qwant Search',
   description: 'Performs a search using the Qwant API.',
+  allowedIslands: ['expose', 'misspell'], // Only these islands will be considered
   supports: {
     pagination: true,
     pageParam: 'p',
@@ -83,18 +84,7 @@ module.exports = {
           }
         });
       }
-      // Misspell island
-      const misspellIsland = require('../islands/misspellIsland');
-      const misspellResult = await misspellIsland.shouldRender(query);
-      // Exposé island (Wikipedia)
-      const islands = [];
-      if (misspellResult && misspellResult.shouldRender) {
-        islands.push(misspellIsland.renderIsland(query, misspellResult));
-      }
-      const exposeResult = await exposeIsland.shouldRender(query);
-      if (exposeResult && exposeResult.shouldRender) {
-        islands.push(exposeIsland.renderIsland(query, exposeResult));
-      }
+      const islands = await collectAllowedIslands(query, this.allowedIslands);
       return {
         answers: results.map(item => ({
           name: item.title,

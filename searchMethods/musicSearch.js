@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { collectAllowedIslands } = require('../utils/islandHelpers');
 
 // Directory where your music files are stored
 const MUSIC_DIR = path.resolve(__dirname, '../music');
@@ -18,8 +19,15 @@ function getAudioMetadata(filename) {
 
 module.exports = {
   name: 'Music Search',
-  description: 'Searches local music files and returns playable results.',
-  async search(query) {
+  description: 'Searches local music files.',
+  allowedIslands: [], // Only music-related islands will be considered
+  supports: {
+    pagination: true,
+    pageParam: 'p',
+    pageSize: 10,
+    filters: []
+  },
+  async search(query, rankingPreferences = {}) {
     let files = [];
     try {
       files = fs.readdirSync(MUSIC_DIR).filter(f => /\.(mp3|wav|ogg|flac)$/i.test(f));
@@ -58,10 +66,11 @@ module.exports = {
       </div>`;
     }
     const html = `<div class='results-col' style='flex:1;min-width:0;'>${left.map(player).join('')}</div>`;
+    const islands = await collectAllowedIslands(query, this.allowedIslands);
     return {
       answers,
       html,
-      islands: []
+      islands
     };
   }
 };
