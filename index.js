@@ -16,8 +16,8 @@ fs.readdirSync(searchMethodsDir).forEach(file => {
   }
 });
 
-const NODE_NAME = 'Example Search Node';
-const NODE_DESCRIPTION = 'A node that provides search capabilities.';
+const NODE_NAME = 'Example Index Node';
+const NODE_DESCRIPTION = 'An example Index Search Engine node from a repository.';
 const NODE_FEATURES = Object.values(searchMethods).map(m => m.description || m.name || '').filter(Boolean);
 const NODE_METHODS = Object.keys(searchMethods);
 

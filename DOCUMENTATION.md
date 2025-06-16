@@ -77,7 +77,7 @@ All search methods return:
 
 ## Node Interconnectivity & Expansion (NOT IMPLEMENTED YET)
 
-The architecture is designed for future expansion to support **interconnected nodes**. This enables nodes to communicate, share data, and collaborate on search and indexing tasks. Potential use cases include:
+The architecture is being designed for future expansion to support **interconnected nodes**. This enables nodes to communicate, share data, and collaborate on search and indexing tasks. Potential use cases include:
 
 - **Remote Search:** Query other nodes for additional results or enrichment.
 - **Index Sharing:** Share or synchronize index updates between nodes for improved coverage and freshness.
