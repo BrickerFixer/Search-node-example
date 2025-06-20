@@ -1,0 +1,8 @@
+{
+  "indexSharing": {
+    "enabled": true,
+    "expose": ["staticdocs"],
+    "maxUpdates": 100
+  },
+  "peers": []
+}
